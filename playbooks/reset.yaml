@@ -1,0 +1,16 @@
+- name: Cloud-I Reset
+  hosts: webservers
+  tasks:
+    - name: stop containers
+      ansible.builtin.make:
+        chdir: "~/cloudI"
+        target: "reset"
+
+    - name: remove repo
+      ansible.builtin.file:
+        path: "~/cloudI"
+        state: absent
+    - name: remove dump
+      ansible.builtin.file:
+        path: "~/dump.sql"
+        state: absent
