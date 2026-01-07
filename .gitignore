@@ -1,3 +1,12 @@
+# Environment files with secrets
 .env*
+!.env.j2.example
+
+# PDF files
 CloudI.pdf
+
+# Python virtual environment
 .venv/
+
+# Temporary files
+tmp/

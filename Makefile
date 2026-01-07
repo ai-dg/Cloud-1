@@ -8,7 +8,7 @@ clean:
 	ansible-playbook ./playbooks/reset.yaml
 
 dump:
-	ansible-playbook ./playbooks/playbook.yaml --start-at-task="Copy dump to temp location"
+	ansible-playbook ./playbooks/playbook.yaml --start-at-task="Copy dump"
 
 config:
 	ansible-playbook ./playbooks/playbook.yaml --start-at-task="Generate .env from template"

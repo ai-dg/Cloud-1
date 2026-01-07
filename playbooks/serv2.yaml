@@ -13,6 +13,11 @@
         name: make
         state: present
 
+    - name: install git
+      ansible.builtin.apt:
+        name: git
+        state: present
+
     - name: copy hosts file
       ansible.builtin.copy:
         src: "../conf/hosts"
@@ -38,7 +43,7 @@
       ansible.builtin.replace:
         path: /root/dump.sql
         regexp: 'https?://localhost'
-        replace: "{{ domain_name }}"
+        replace: "https://{{ domain_name }}"
       tags: [dump]
 
     - name: Generate .env from template

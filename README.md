@@ -482,36 +482,40 @@ inventory = inventory/inventory.ini
 
 ### ■ Environment Template
 
-The `.env.j2` template (not tracked in git) should contain all necessary environment variables for the Inception-based application:
+⚠️ **IMPORTANT**: Le fichier `conf/.env.j2` est maintenant inclus dans le projet avec des valeurs par défaut. **VOUS DEVEZ CHANGER TOUS LES MOTS DE PASSE** avant le déploiement en production!
+
+Le fichier `conf/.env.j2` contient les variables d'environnement nécessaires:
 
 ```bash
-# Domain Configuration
-DOMAIN_NAME={{ domain_name }}
-
-# Database Configuration
-MYSQL_ROOT_PASSWORD=secure_root_password
-MYSQL_DATABASE=wordpress
-MYSQL_USER=wordpress
-MYSQL_PASSWORD=secure_user_password
-MYSQL_HOST=mariadb
-
-# WordPress Configuration
-WP_URL=https://{{ domain_name }}
-WP_TITLE=My WordPress Site
-WP_ADMIN_USER=admin
-WP_ADMIN_PASSWORD=secure_admin_password
-WP_ADMIN_EMAIL=admin@{{ domain_name }}
+# MySQL/MariaDB Configuration
+MYSQL_ROOT_PASSWORD=SecureRootPass123!      # ⚠️ CHANGEZ CE MOT DE PASSE!
+MYSQL_USER=wordpress_user
+MYSQL_DATABASE=wordpress_db
+MYSQL_PASSWORD=SecureUserPass456!           # ⚠️ CHANGEZ CE MOT DE PASSE!
 
 # PHPMyAdmin Configuration
-PMA_HOST=mariadb
-PMA_PORT=3306
+PMA_ABSOLUTE_URI=https://{{ domain_name }}/phpmyadmin/
 
-# TLS/SSL Configuration
-SSL_CERTIFICATE=/etc/ssl/certs/{{ domain_name }}.crt
-SSL_CERTIFICATE_KEY=/etc/ssl/private/{{ domain_name }}.key
+# Grafana Configuration
+GRAFANA_USER_NAME=admin
+GRAFANA_PWD=SecureGrafanaPass789!           # ⚠️ CHANGEZ CE MOT DE PASSE!
 
-# Add other service-specific variables as needed
+# Domain Configuration
+DOMAIN_NAME={{ domain_name }}
 ```
+
+**Variables Jinja2 disponibles:**
+- `{{ domain_name }}`: Injecté depuis l'inventaire Ansible
+- Autres variables peuvent être ajoutées dans `inventory/inventory.ini`
+
+**Fichier exemple:**
+Un fichier `conf/.env.j2.example` est fourni comme référence avec des valeurs vides.
+
+**Sécurité:**
+- ✅ Le fichier `.env.j2` est dans `.gitignore` (ne sera pas commité)
+- ✅ Utilisez des mots de passe forts et uniques
+- ✅ Ne partagez jamais vos mots de passe réels
+- ✅ Changez les mots de passe par défaut avant le déploiement
 
 ---
 
@@ -810,6 +814,26 @@ Potential improvements:
 - [ ] Implement blue-green deployments
 - [ ] Add load balancer configuration
 - [ ] Create development environment playbook
+
+---
+
+## 📚 Documentation
+
+### Fichiers de documentation disponibles:
+
+- **CORRECTIONS_EFFECTUEES.md** - Liste détaillée de toutes les corrections apportées au projet
+- **CHECKLIST_EVALUATION.md** - Checklist complète basée sur les critères du PDF d'évaluation
+- **GUIDE_TEST_RAPIDE.md** - Guide pour tester rapidement le projet
+
+### Corrections récentes (Janvier 2025):
+
+✅ **Fichier .env.j2 créé** - Template Jinja2 pour les variables d'environnement\
+✅ **Installation de Git ajoutée** - Correction des playbooks Ansible\
+✅ **URLs corrigées** - Standardisation avec `https://{{ domain_name }}`\
+✅ **Makefile corrigé** - Référence de tâche mise à jour\
+✅ **Dockerfiles optimisés** - Meilleure utilisation du cache Docker\
+✅ **Port 80 ajouté** - Redirection HTTP → HTTPS fonctionnelle\
+✅ **Pas de secrets en dur** - Conformité aux exigences de sécurité
 
 ---
 

@@ -13,6 +13,11 @@
         name: make
         state: present
 
+    - name: install git
+      ansible.builtin.apt:
+        name: git
+        state: present
+
     - name: copy hosts file
       ansible.builtin.copy:
         src: "../conf/hosts"
@@ -24,7 +29,7 @@
 
     - name: pull sources
       ansible.builtin.git:
-        repo: https://github.com/ChristopheAlborPirame/cloud-I-app.git
+        repo: git@github.com:ai-dg/Cloud-1-app.git
         dest: ~/cloudI
 
     - name: Copy dump
