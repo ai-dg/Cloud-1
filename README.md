@@ -348,7 +348,6 @@ Cloud-1/
 ├── conf/                   # Configuration files
 │   ├── hosts               # System hosts file template
 │   └── .env.j2            # Environment template (not in git)
-├── files/                  # Git submodule (cloud-I-app), not used by the playbooks
 ├── inventory/              # Ansible inventory
 │   └── inventory.ini      # Server definitions and variables
 └── playbooks/              # Ansible playbooks
@@ -444,7 +443,7 @@ Cleanup tasks:
 - `serv1.yaml`: Targets only webserver1
 - `serv2.yaml`: Targets only webserver2
 
-Both use the same tasks as the main playbook but with different host groups.
+Both use the same tasks as the main playbook with different host groups; they clone the app from `ChristopheAlborPirame/cloud-I-app` instead of `ai-dg/Cloud-1-app`.
 
 ---
 
