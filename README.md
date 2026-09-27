@@ -24,7 +24,6 @@ The goal is to deploy a production-ready WordPress site where:
 📘 **42 School DevOps Project**: Automate the deployment of a multi-container WordPress infrastructure on real cloud servers.
 
 > ⚠️ **Important**: This project uses REAL cloud resources. You are responsible for managing costs and stopping unused services.
-=======
 
 ---
 
@@ -49,7 +48,7 @@ The goal is to deploy a production-ready WordPress site where:
 ✔️ **Database Management**: MySQL setup with automated dump handling\
 ✔️ **Domain Configuration**: Dynamic domain name configuration via DuckDNS\
 ✔️ **Environment Management**: Template-based environment configuration\
-✔️ **Idempotent Operations**: Safe to run multiple times without side effects\
+✔️ **Re-runnable**: Safe to run again; each run rebuilds all images and recreates containers\
 ✔️ **Modular Architecture**: Separate playbooks for different deployment scenarios\
 ✔️ **Easy Cleanup**: Complete infrastructure teardown with reset functionality
 
@@ -64,7 +63,7 @@ The project follows the Inception architecture with separate containers:
 | Service | Container | Purpose |
 |---------|-----------|---------|
 | **WordPress** | wordpress | PHP-FPM running WordPress |
-| **MySQL** | mariadb | Database backend |
+| **MySQL** | mysql (service `db`) | Database backend |
 | **Nginx** | nginx | Web server and reverse proxy |
 | **PHPMyAdmin** | phpmyadmin | Database management interface |
 
@@ -84,7 +83,6 @@ The project can deploy to multiple cloud servers:
 - **Database Security**: MySQL not directly accessible from internet
 - **TLS/SSL**: HTTPS support via certificates
 - **Domain Names**: Free domains via DuckDNS
-=======
 
 ---
 
@@ -98,7 +96,7 @@ The project uses Ansible playbooks to automate the entire deployment:
    - Install required packages (curl, make, git)
    - Configure Docker using `geerlingguy.docker` role
    - Set up host file configurations
-   - Ensure Python is available (required by Ansible)
+   - Python must already be installed on the target (no task installs it)
 
 2. **Application Deployment**
    - Clone Inception-based application from GitHub
@@ -114,8 +112,8 @@ The project uses Ansible playbooks to automate the entire deployment:
    - Manage container lifecycle and auto-restart
 
 4. **Security Configuration**
-   - Configure firewall rules
-   - Set up TLS/SSL certificates
+   - No firewall rules are set by the playbooks
+   - Self-signed TLS certificate generated in the nginx image (app repo)
    - Restrict database access
    - Configure secure environment variables
 
@@ -124,7 +122,7 @@ The project uses Ansible playbooks to automate the entire deployment:
 Environment variables are managed through Jinja2 templates (`.env.j2`), allowing dynamic configuration based on:
 - Server hostname and IP address
 - Domain names (DuckDNS or custom)
-- Database credentials (auto-generated)
+- Database credentials (set manually in `conf/.env.j2`)
 - WordPress configuration
 - Service-specific settings
 - TLS/SSL certificate paths
@@ -161,7 +159,7 @@ Environment variables are managed through Jinja2 templates (`.env.j2`), allowing
 1. Clone the repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/ai-dg/Cloud-1.git
 cd Cloud-1
 ```
 
@@ -209,9 +207,10 @@ webserver2 ansible_host=YOUR_SERVER_IP ansible_user=root ansible_port=22 domain_
 
 Get a free domain from:
 - [DuckDNS](https://www.duckdns.org/) (recommended)
-- [Freenom](https://www.freenom.com/) (.tk, .ml, .ga, .cf, .gq TLDs)
 
 Update your domain's DNS to point to your server IP.
+
+8. Create the environment template: `cp conf/.env.j2.example conf/.env.j2`, then fill in every value.
 
 ---
 
@@ -231,8 +230,8 @@ make [target]
 | `make serv1` | Deploy to webserver1 only |
 | `make serv2` | Deploy to webserver2 only |
 | `make clean` | Remove all deployments and clean up |
-| `make dump` | Update database dump only |
-| `make config` | Regenerate environment configuration |
+| `make dump` | Redeploy from the "Copy dump" task onward (dump, .env, full rebuild) |
+| `make config` | Regenerate .env, then rebuild and restart all containers |
 | `make connect1` | SSH into webserver1 |
 | `make connect2` | SSH into webserver2 |
 
@@ -264,7 +263,7 @@ ssh root@YOUR_SERVER_IP "docker ps"
 #### 3. Update Configuration
 
 ```bash
-# Regenerate .env files without full rebuild
+# Regenerate .env files, then rebuild everything
 make config
 ```
 
@@ -349,7 +348,7 @@ Cloud-1/
 ├── conf/                   # Configuration files
 │   ├── hosts               # System hosts file template
 │   └── .env.j2            # Environment template (not in git)
-├── files/                  # Additional deployment files
+├── files/                  # Git submodule (cloud-I-app), not used by the playbooks
 ├── inventory/              # Ansible inventory
 │   └── inventory.ini      # Server definitions and variables
 └── playbooks/              # Ansible playbooks
@@ -364,15 +363,17 @@ Cloud-1/
 ```
 ~/cloudI/                    # Cloned from GitHub
 ├── Makefile                # Docker compose management
-├── docker-compose.yml      # Service orchestration
 ├── srcs/                   # Source files
+│   ├── docker-compose.yml # Service orchestration
 │   ├── .env               # Generated from template
 │   └── requirements/      # Service configurations
 │       ├── nginx/         # Web server config
 │       ├── wordpress/     # WordPress PHP-FPM
-│       ├── mariadb/       # MySQL database
+│       ├── mysql/         # MySQL database
 │       │   └── dump/      # Database dumps
-│       └── phpmyadmin/    # Database management UI
+│       ├── grafana/
+│       ├── prometheus/
+│       └── tools/
 └── ...
 ```
 
@@ -403,7 +404,7 @@ Executes the following tasks in order:
 
 4. **Application Setup**
    - Clone Inception-based repository from GitHub
-   - Repository: `https://github.com/ChristopheAlborPirame/cloud-I-app.git`
+   - Repository: `git@github.com:ai-dg/Cloud-1-app.git` (SSH, needs a GitHub key on the server; serv1/serv2 clone `https://github.com/ChristopheAlborPirame/cloud-I-app.git`)
    - Destination: `~/cloudI`
    - Includes docker-compose.yml and all service configurations
 
@@ -482,7 +483,7 @@ inventory = inventory/inventory.ini
 
 ### ■ Environment Template
 
-⚠️ **IMPORTANT**: Le fichier `conf/.env.j2` est maintenant inclus dans le projet avec des valeurs par défaut. **VOUS DEVEZ CHANGER TOUS LES MOTS DE PASSE** avant le déploiement en production!
+⚠️ **IMPORTANT**: Le fichier `conf/.env.j2` n'est pas versionné : copiez `conf/.env.j2.example` vers `conf/.env.j2` et remplissez-le. **VOUS DEVEZ CHANGER TOUS LES MOTS DE PASSE** avant le déploiement en production!
 
 Le fichier `conf/.env.j2` contient les variables d'environnement nécessaires:
 
@@ -604,7 +605,7 @@ ssh root@YOUR_SERVER_IP
 docker ps -a
 
 # Check logs
-docker-compose -f ~/cloudI/docker-compose.yml logs
+docker compose -f ~/cloudI/srcs/docker-compose.yml logs
 
 # Restart containers
 cd ~/cloudI && make re
@@ -629,10 +630,10 @@ telnet YOUR_SERVER_IP 443
 **Database Connection Issues**
 ```bash
 # Check MySQL container
-ssh root@YOUR_SERVER_IP "docker ps | grep mariadb"
+ssh root@YOUR_SERVER_IP "docker ps | grep mysql"
 
 # Check database logs
-ssh root@YOUR_SERVER_IP "docker logs mariadb"
+ssh root@YOUR_SERVER_IP "docker logs mysql"
 
 # Verify .env file has correct credentials
 ssh root@YOUR_SERVER_IP "cat ~/cloudI/srcs/.env"
@@ -806,7 +807,7 @@ ansible-playbook ./playbooks/playbook.yaml --tags "config,build"
 
 Potential improvements:
 
-- [ ] Add monitoring and alerting (Prometheus, Grafana)
+- [ ] Add alerting on top of the existing Prometheus/Grafana containers
 - [ ] Implement automated backups
 - [ ] Add SSL/TLS certificate management (Let's Encrypt)
 - [ ] Create CI/CD pipeline integration
@@ -819,15 +820,9 @@ Potential improvements:
 
 ## 📚 Documentation
 
-### Fichiers de documentation disponibles:
-
-- **CORRECTIONS_EFFECTUEES.md** - Liste détaillée de toutes les corrections apportées au projet
-- **CHECKLIST_EVALUATION.md** - Checklist complète basée sur les critères du PDF d'évaluation
-- **GUIDE_TEST_RAPIDE.md** - Guide pour tester rapidement le projet
-
 ### Corrections récentes (Janvier 2025):
 
-✅ **Fichier .env.j2 créé** - Template Jinja2 pour les variables d'environnement\
+✅ **Fichier .env.j2.example créé** - Template Jinja2 pour les variables d'environnement\
 ✅ **Installation de Git ajoutée** - Correction des playbooks Ansible\
 ✅ **URLs corrigées** - Standardisation avec `https://{{ domain_name }}`\
 ✅ **Makefile corrigé** - Référence de tâche mise à jour\
